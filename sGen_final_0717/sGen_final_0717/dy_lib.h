@@ -1,3 +1,14 @@
+/********************************************************************
+*																	*
+*	VISION IMAGE PROCESSING LAB.									*
+*	IMAGE PRCESSING LIBRARY FOR VIP LAB.							*
+*	last modified : 17 / 07 / 2014	by Do-young Park				*
+*																	*
+*	Copyright(c) 2014												*
+*	All rights reserved by Do-young Park							*
+*																	*
+********************************************************************/
+
 #ifndef _DOYOUNG_LIB_
 #define _DOYOUNG_LIB_
 
@@ -73,28 +84,34 @@ VOID REVERSE_IMAGE(T* data, CONST INT row, CONST INT col, CONST INT bitPerPixel 
 
 /* READ & WRITE IMAGE FILE( FORMAT TO RAW DATA ) - READ IMAGE - ROW(HEIGHT), COL(WIDTH), OUTPUT DATA(RAW), IMAGE FILE NAME - WRITE IMAGE - ROW(HEIGHT), COL(WIDTH), IMAGE RAW DATA, IMAGE FILE NAME < color image => rgb plane > */
 /* PGM FILE FORMAT */
-BOOL ReadPgm(INT *row, INT *col, BYTE* img, LPCSTR  filename);
-BOOL WritePgm(INT row, INT col, BYTE* img, LPCSTR  filename);
+BYTE* ReadPgm(INT *row, INT *col, LPCSTR  filename);
+VOID WritePgm(INT row, INT col, BYTE* img, LPCSTR  filename); //완
 
 /* PBM FILE FORMAT*/
-BOOL ReadPgm(INT *row, INT *col, BYTE* img, LPCSTR  filename);
-BOOL WritePgm(INT row, INT col, BYTE* img, LPCSTR  filename);
+BYTE* ReadPbm(INT *row, INT *col, LPCSTR  filename);
+VOID WritePbm(INT row, INT col, BYTE* img, LPCSTR  filename);
 
 /* PPM FILE FORMAT */
-BOOL ReadPpm(INT *row, INT *col, BYTE* img, LPCSTR  filename);
-BOOL WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename);
+BYTE* ReadPpm(INT *row, INT *col, LPCSTR  filename);
+VOID WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename);
 
 /* BMP FILE FORMAT */
-BOOL ReadBmp(INT *row, INT *col, BYTE* img, LPCSTR  filename);
-BOOL WriteBmp(INT row, INT col, BYTE* img, LPCSTR  filename);
+BYTE* ReadBmp(INT *row, INT *col, LPCSTR  filename);
+VOID WriteBmp(INT row, INT col, BYTE* img, LPCSTR  filename);
 
 /* END READ & WRITE IMAGE FILE - READ IMAGE - ROW(HEIGHT), COL(WIDTH), OUTPUT DATA(RAW), IMAGE FILE NAME - WRITE IMAGE - ROW(HEIGHT), COL(WIDTH), IMAGE RAW DATA, IMAGE FILE NAME*/
+
+/* PSNR - GET PSNR - */
+template <class T>
+DOUBLE gPSNR(T* origin, T* target, CONST INT length, CONST INT max = 255);
+template <class T>
+DOUBLE gPSNR(T* origin, T* target, CONST INT height, CONST INT width, CONST INT max = 255, CONST INT boundary = 0);
+
 
 /* 개발 준비중인 함수들 */
 template<typename T>
 DOUBLE SNR(T* origin, T* target, CONST INT size);
-BOOL ReadPpm(INT *row, INT *col, BYTE* img, LPCSTR  filename);//있고
-BOOL WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename);
+
 BOOL ReadPng(INT *row, INT *col, BYTE* img, LPCSTR  filename);//http://noteroom.tistory.com/157
 BOOL WritePng(INT row, INT col, BYTE* img, LPCSTR  filename);//http://www.fastgraph.com/help/jpeg_header_format.html
 BOOL ReadJpg(INT *row, INT *col, BYTE* img, LPCSTR  filename);

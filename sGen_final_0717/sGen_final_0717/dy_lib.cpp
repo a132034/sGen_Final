@@ -1,7 +1,5 @@
 #include	"dy_lib.h"
 
-#define CLIP(x,MAX,MIN)  ( (x)>(MAX)? (MAX):( (x)<(MIN)? (MIN): (x) ) )
-
 INT Read_Char_For_P(std::ifstream& file);
 INT Read_Int_For_P(std::ifstream& file);
 
@@ -203,16 +201,16 @@ VOID REVERSE_IMAGE(T* data, CONST INT row, CONST INT col, CONST INT bitPerPixel)
 		data[i] = max - data[i];
 }
 
-BOOL WritePgm(INT row, INT col, BYTE* img, LPCSTR  filename)
+VOID WritePgm(INT row, INT col, BYTE* img, LPCSTR  filename)
 {
 	std::ofstream file;
-	char* header = "P5\n Created by Vision Image Processing(VIP) Lab, Sangmyung Univ. Korea \n";
+	char* header = "P5\n# Created by Vision Image Processing(VIP) Lab, Sangmyung Univ. Korea \n";
 
 	file.open(filename, std::ios::out | std::ios::binary);
 	if (file.fail())
 	{
 		std::cout << "file open error in WritePgm function" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 
 	//header information writing phase 'P5' is for pgm file format
@@ -220,27 +218,27 @@ BOOL WritePgm(INT row, INT col, BYTE* img, LPCSTR  filename)
 	file.write((char*)img, row*col);
 
 	file.close();
-	return TRUE;
+
 }
 
-BOOL ReadPgm(INT *row, INT *col, BYTE* img, LPCSTR  filename)
+BYTE* ReadPgm(INT *row, INT *col, LPCSTR  filename)
 {
 	std::ifstream file;
-	BYTE *buffer;
+	BYTE *buffer, *handle;
 	INT size;
 
 	file.open(filename, std::ios::in | std::ios::binary);
 	if (file.fail())
 	{
 		std::cout << "file open error in ReadPgm function" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 
 	//header information reading phase 'P5' is for pgm file format
 	if ((file.get() != 'P') || (file.get() != '5'))
 	{
 		std::cerr << "error : image format is not a pgm" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 
 	//read col & row
@@ -251,18 +249,18 @@ BOOL ReadPgm(INT *row, INT *col, BYTE* img, LPCSTR  filename)
 	size = (*row)*(*col);
 
 	buffer = new byte[size];
-	img = buffer;
+	handle = buffer;
 
 	if (buffer == NULL)
 	{
 		std::cerr << "error: out of memory in ReadPgm function" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 
 	// read image from file
 	file.read((char*)buffer, size);
 	file.close();
-	return TRUE;
+	return handle;
 }
 
 
@@ -301,7 +299,7 @@ INT Read_Int_For_P(std::ifstream& file)
 }
 /* END FOR PGM, PPM, AND PBM FILE FORMAT */
 
-BOOL WriteBmp(INT row, INT col, BYTE* img, LPCSTR  filename)
+VOID WriteBmp(INT row, INT col, BYTE* img, LPCSTR  filename)
 {
 	register INT i, j;
 	std::ofstream file;
@@ -315,7 +313,7 @@ BOOL WriteBmp(INT row, INT col, BYTE* img, LPCSTR  filename)
 	if (file.fail())
 	{
 		std::cout << "file open error in WriteBmp function" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 
 	//type "BM" write
@@ -376,10 +374,9 @@ BOOL WriteBmp(INT row, INT col, BYTE* img, LPCSTR  filename)
 
 	delete[]rawdata;
 	file.close();
-	return TRUE;
 }
 
-BOOL ReadBmp(INT *row, INT *col, BYTE* img, LPCSTR  filename)
+BYTE* ReadBmp(INT *row, INT *col, LPCSTR  filename)
 {
 	register INT i, j;
 	std::ifstream file;
@@ -395,7 +392,7 @@ BOOL ReadBmp(INT *row, INT *col, BYTE* img, LPCSTR  filename)
 	if (file.fail())
 	{
 		std::cout << "file open error in ReadBmp function" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 
 	//check 'BM' type
@@ -403,7 +400,7 @@ BOOL ReadBmp(INT *row, INT *col, BYTE* img, LPCSTR  filename)
 	if (check != 19778)
 	{
 		std::cerr << "error : image format is not a bmp" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 	/* // alter
 	if ((file.get() != 'B') || (file.get() != 'M'))
@@ -443,9 +440,10 @@ BOOL ReadBmp(INT *row, INT *col, BYTE* img, LPCSTR  filename)
 	rawdata = new BYTE[Size];
 	reverse = new BYTE[Size];
 
-	if (Bmp.NumOfColor != 0){
+	if (Bmp.NumOfColor != 0)
+	{
 		std::cout << "not 24 bit" << std::endl;
-		return FALSE;
+		exit(1);
 	}
 	else
 	{
@@ -479,24 +477,68 @@ BOOL ReadBmp(INT *row, INT *col, BYTE* img, LPCSTR  filename)
 			rawdata[i*Bmp.Width + j + Bmp.Width * 2] = reverse[3 * (i*Bmp.Width + j) + 2];
 		}
 	}
-		
-	img = rawdata;
 
 	delete[] reverse;
-	return TRUE;
+	return rawdata;
 }
 
-BOOL WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename)
+VOID WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename)
 {
-	return TRUE;
+
 }
-BOOL ReadPpm(INT *row, INT *col, BYTE* img, LPCSTR  filename)
+BYTE* ReadPpm(INT *row, INT *col, LPCSTR  filename)
 {
 	std::ifstream file;
 	register INT i;
 	INT size;
-	BYTE *buffer, *rgbp, *rgbPtr;
-	return TRUE;
+	BYTE *buffer, *rgbp = NULL, *rgbPtr;
+	return rgbp;
 
 }
 
+
+
+template <class T>
+DOUBLE gPSNR(T* origin, T* target, CONST INT length, CONST INT max)
+{
+	register INT i;
+	DOUBLE PSNR = 0.0;
+	DOUBLE MSE = 0.0;
+	DOUBLE SUM = 0.0;
+
+	for (i = 0; i < length; ++i)
+	{
+		SUM += (origin[i] - target[i]) * (origin[i] - target[i]);
+	}
+
+	MSE = SUM / length;
+
+	PSNR = 20.0 * log10(max / sqrt(MSE));
+
+	return PSNR;
+}
+
+template <class T>
+DOUBLE gPSNR(T* origin, T* target, CONST INT height, CONST INT width, CONST INT max, CONST INT boundary)
+{
+	register INT i, j;
+	DOUBLE PSNR = 0.0;
+	DOUBLE MSE = 0.0;
+	DOUBLE SUM = 0.0;
+	LONG LENGTH = 0;
+
+	for (i = boundary; i < height - boundary; ++i)
+	{
+		for (j = boundary; j < width - boundary; ++j)
+		{
+			SUM += (origin[i*width + j] - target[i*width + j])*(origin[i*width + j] - target[i*width + j]);
+			LENGTH++;
+		}
+	}
+
+	MSE = SUM / LENGTH;
+
+	PSNR = 20.0 * log10(max / sqrt(MSE));
+
+	return PSNR;
+}
