@@ -4,7 +4,7 @@
 *	안성수, 김태원, 강선우, 박도영, 이소연, 이경미, 장희수			*
 *	3장의 사진을 이용하여 perspective view를 생성하는 프로그램		*
 *																	*
-*	last modified : 17 / 07 / 2014									*
+*	last modified : 31 / 07 / 2014									*
 *																	*
 *	Copyright(c) 2014												*
 *	All rights reserved by Do-young Park							*
@@ -16,14 +16,17 @@
 
 // for image processing
 #include	"dy_lib.h"
-
-#define NUM_OF_INTERPOLATIED_IMAGE 8
+#include	"basic.h"
+#include	"readPPM.h"
+#include	"nonlocal.h"
+#define QX_DEF_SIGMA							0.1//0.1
+#define NUM_OF_INTERPOLATIED_IMAGE				8
+#define MAX_DISPARITY							20
 
 using namespace std;
-///0. base - open cv lib 사용, tcp통신(장고 서버와)
-/// 0-1. open cv 2.4.8 사용, visual studio 2013 사용 
+void runStereo(char*filename_disparity_map, char*filename_left_image, char*filename_right_image, int max_disparity, bool use_post_processing);
 
-INT main(INT argc, CHAR *argv[])
+INT main() // 나중에 이름 바꿔서 래핑해도 됨 
 {
 	//variable declaration
 	register INT i, j;									//for loop
@@ -39,189 +42,146 @@ INT main(INT argc, CHAR *argv[])
 	IplImage *le, *ri;
 	IplImage *view;
 
+	char *original_left			=	"TL.jpg";
+	char *original_mid = "TR.jpg";
+	char *original_right = "TR.jpg";
+	char *disp_l_m = "disp_l_m.ppm";
+	char *disp_m_r = "disp_m_r.ppm";
+	char *stereo_left = "1.ppm";
+	char *stereo_mid = "6.ppm";
+	char *stereo_right = "11.ppm";
+	char *outcome[NUM_OF_INTERPOLATIED_IMAGE] = { "2.png", "3.png", "4.png", "5.png", "7.png", "8.png", "9.png", "10.png" };
 
-	///1. 통신을 이용하여 파일을 받음. 3장 받을 것으로 예상.
 
 	//test - 3장 로드 
-	if ((leftImg = cvLoadImage("TL.jpg", CV_LOAD_IMAGE_COLOR)) == NULL)
+	if ((leftImg = cvLoadImage(original_left, CV_LOAD_IMAGE_COLOR)) == NULL)
 	{
 		cerr << "left image is not open" << endl;
 		exit(1);
 	}
-	if ((midImg = cvLoadImage("TR.jpg", CV_LOAD_IMAGE_COLOR)) == NULL)
+	if ((midImg = cvLoadImage(original_mid, CV_LOAD_IMAGE_COLOR)) == NULL)
 	{
 		cerr << "mid image is not open" << endl;
 		exit(1);
 	}
-	if ((rightImg = cvLoadImage("TR.jpg", CV_LOAD_IMAGE_COLOR)) == NULL)
+	if ((rightImg = cvLoadImage(original_right, CV_LOAD_IMAGE_COLOR)) == NULL)
 	{
 		cerr << "right image is not open" << endl;
 		exit(1);
 	}
+	cout << " 1번 이미지 열기 완료!!!! (원본 이미지) " << endl;
+	//원본 이미지 저장
+	cvSaveImage(stereo_left, leftImg);
+	cvSaveImage(stereo_mid, midImg);
+	cvSaveImage(stereo_right, rightImg);
+	cout << " 2번 이미지 저장 완료!!!! (원본 이미지) " << endl;
+	//저장한 파일을 다시 불러와서 stereomatching (rectify 과정 우선 생략)
+	runStereo(disp_l_m, stereo_left, stereo_mid, MAX_DISPARITY, false);//excluding non-local post processing
+	runStereo(disp_l_m, stereo_left, stereo_mid, MAX_DISPARITY, true);//including non-local post processing
 
-	///2. 받은 파일을 (저장은 옵션) raw data 형태로 추출 (bmp, png는 옵션) 
-	//test -  현재는 iplimage 형태로 해놓음. 
+	//runStereo(disp_m_r, stereo_mid, stereo_right, MAX_DISPARITY, false);//excluding non-local post processing
+	//runStereo(disp_m_r, stereo_mid, stereo_right, MAX_DISPARITY, true);//including non-local post processing
+	
+	//ppm 으로 열고 pgm으로 저장해서 디스패리티만 pgm으로 열면될거같음. 
+	cout << " 3번 스테레오 매칭 완료!!! (디스패리티 2장 나옴!) " << endl;
 
-
-	///3. 추출한 데이터를 가지고 영상처리 
-	/// 3-1. 데이터를 가지고 image rectification 수행
-	// 준비중...
-
-
-	/// 3-2. rectified image를 이용하여 stereo matching하여 disparity map 생성
-	// stereo matching prameter 
-	CvStereoBMState *BMState = cvCreateStereoBMState();
-	BMState->preFilterSize = 21;  // 5x5에서 21x21까지
-	BMState->preFilterCap = 21;
-	BMState->SADWindowSize = 21;  // 5x5에서 21x21까지
-	BMState->minDisparity = 1;
-	BMState->numberOfDisparities = 64;  //Searching하기 위한 pixel들의 개수
-	BMState->textureThreshold = 10;    //minimum allowed
-	BMState->uniquenessRatio = 5;
-
-	//color to gray
-	L = cvCreateImage(cvSize(leftImg->width, leftImg->height), leftImg->depth, 1);
-	R = cvCreateImage(cvSize(rightImg->width, rightImg->height), rightImg->depth, 1);
-	M = cvCreateImage(cvSize(midImg->width, midImg->height), midImg->depth, 1);
-
-	cvCvtColor(leftImg, L, CV_RGB2GRAY);
-	cvCvtColor(rightImg, R, CV_RGB2GRAY);
-	cvCvtColor(midImg, M, CV_RGB2GRAY);
-
-	//disparity 
-	disparity_img_L_M = cvCreateImage(cvSize(midImg->width, midImg->height), IPL_DEPTH_8U, 1);
-	disparity_img_M_R = cvCreateImage(cvSize(midImg->width, midImg->height), IPL_DEPTH_8U, 1);
-	disparity_L_M = cvCreateMat(midImg->height, midImg->width, CV_16SC1);
-	disparity_M_R = cvCreateMat(midImg->height, midImg->width, CV_16SC1);
-
-	//stereo matching - left and mid
-	cvFindStereoCorrespondenceBM(L, M, disparity_L_M, BMState);		//stereo matching
-	cvNormalize(disparity_L_M, disparity_img_L_M, 0, 255, CV_MINMAX);	//normalize
-
-	//mid and right
-	cvFindStereoCorrespondenceBM(M, R, disparity_M_R, BMState);		//stereo matching
-	cvNormalize(disparity_M_R, disparity_img_M_R, 0, 255, CV_MINMAX);	//normalize
-
-
-	re = cvCreateImage(cvSize(midImg->width, midImg->height), IPL_DEPTH_8U, 1);
-	for (i = 0; i < midImg->height; ++i)
-	{
-		for (j = 0; j < midImg->width / 2; ++j)
-		{
-			re->imageData[i*midImg->width + j] = disparity_img_L_M->imageData[i*midImg->width + j + BMState->numberOfDisparities];
-		}
-		for (j = midImg->width / 2 + 1; j < midImg->width; ++j)
-		{
-			re->imageData[i*midImg->width + j] = disparity_img_L_M->imageData[i*midImg->width + j];
-		}
-	}//반반무마니? 매칭포인트 잡아야되나? 비율로? 픽셀로? 
+	///********************************************************************************************************************************************///
 
 
 	/// 3-3. disparity map과 raw data를 가지고 view interpolation(backward projection)
-	//test - disparity map을 우선 테스트용으로 꺼내오자 
-	if ((disparity_test = cvLoadImage("disp1.png", CV_LOAD_IMAGE_UNCHANGED)) == NULL)
+	// 다시 저장된 디스패리티 맵을 꺼내옴(이걸 두번 하면 됨. 
+	if ((disparity_test = cvLoadImage(disp_l_m, CV_LOAD_IMAGE_UNCHANGED)) == NULL)
 	{
-		cerr << "disparity not open" << endl;
+		cerr << "disparity not open - view interpolation" << endl;
 		exit(1);
 	}
+	cout << " 4번 디스패리티 열기 완료!!!" << endl;
 
-	if ((le = cvLoadImage("flowerpots_view1.png", CV_LOAD_IMAGE_UNCHANGED)) == NULL)
-	{
-		cerr << "left not open" << endl;
-		exit(1);
-	}
-	if ((ri = cvLoadImage("flowerpots_view5.png", CV_LOAD_IMAGE_UNCHANGED)) == NULL)
-	{
-		cerr << "right not open" << endl;
-		exit(1);
-	}
-	
-	IplImage *rgbRe = cvCreateImage(cvSize(le->width, le->height), IPL_DEPTH_8U, 3);
-	re2 = cvCreateImage(cvSize(ri->width, ri->height), IPL_DEPTH_8U, 1);
-	//char* filenames[10] = { "view1.png", "view2.png", "view3.png", "view4.png", "view5.png", "view6.png", "view7.png", "view8.png", "view9.png", "view10.png" };
-	char* filenames_c[10] = { "cview1.png", "cview2.png", "cview3.png", "cview4.png", "cview5.png", "cview6.png", "cview7.png", "cview8.png", "cview9.png", "cview10.png" };
-	//1. forward projection 방식 -> 완성후 backward로 바꾸고, inpaint 기술 추가 예정
-	
-	IplImage* R_Channel_le = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
-	IplImage* G_Channel_le = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
-	IplImage* B_Channel_le = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//if ((le = cvLoadImage(stereo_left, CV_LOAD_IMAGE_UNCHANGED)) == NULL)
+	//{
+	//	cerr << "left not open - view interpolation" << endl;
+	//	exit(1);
+	//}
+	//if ((ri = cvLoadImage(stereo_mid, CV_LOAD_IMAGE_UNCHANGED)) == NULL)
+	//{
+	//	cerr << "right not open - view interpolation" << endl;
+	//	exit(1);
+	//}
+	//
+	//IplImage *rgbRe = cvCreateImage(cvSize(le->width, le->height), IPL_DEPTH_8U, 3);
+	//re2 = cvCreateImage(cvSize(ri->width, ri->height), IPL_DEPTH_8U, 1);
+	////char* filenames[10] = { "view1.png", "view2.png", "view3.png", "view4.png", "view5.png", "view6.png", "view7.png", "view8.png", "view9.png", "view10.png" };
+	////char* filenames_c[10] = { "cview1.png", "cview2.png", "cview3.png", "cview4.png", "cview5.png", "cview6.png", "cview7.png", "cview8.png", "cview9.png", "cview10.png" };
+	//
+	////1. forward projection 방식 -> 완성후 backward로 바꾸고, inpaint 기술 추가 예정
+	//
+	//IplImage* R_Channel_le = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* G_Channel_le = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* B_Channel_le = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
 
-	IplImage* R_Channel_ri = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
-	IplImage* G_Channel_ri = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
-	IplImage* B_Channel_ri = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* R_Channel_ri = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* G_Channel_ri = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* B_Channel_ri = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
 
-	IplImage* R_Channel_Re = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
-	IplImage* G_Channel_Re = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
-	IplImage* B_Channel_Re = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* R_Channel_Re = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* G_Channel_Re = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
+	//IplImage* B_Channel_Re = cvCreateImage(cvGetSize(le), IPL_DEPTH_8U, 1);
 
-	cvSplit(le, B_Channel_le, G_Channel_le, R_Channel_le, 0);
-	cvSplit(ri, B_Channel_ri, G_Channel_ri, R_Channel_ri, 0);
-	cvSetZero(rgbRe);
-	//cvSplit(rgbRe, B_Channel_Re, G_Channel_Re, R_Channel_Re, 0);
+	//cvSplit(le, B_Channel_le, G_Channel_le, R_Channel_le, 0);
+	//cvSplit(ri, B_Channel_ri, G_Channel_ri, R_Channel_ri, 0);
+	//cvSetZero(rgbRe);
+	////cvSplit(rgbRe, B_Channel_Re, G_Channel_Re, R_Channel_Re, 0);
 
-	int col, row;
-	byte* disp1 = ReadPgm(&col, &row, "flowerpots_disp1.pgm");
-	cvSetZero(R_Channel_Re);
-	cvSetZero(G_Channel_Re);
-	cvSetZero(B_Channel_Re);
+	//int col, row;
+	//byte* disp1 = ReadPgm(&col, &row, disp_l_m);
+	//cvSetZero(R_Channel_Re);
+	//cvSetZero(G_Channel_Re);
+	//cvSetZero(B_Channel_Re);
 
-	for (int n = 0; n < 9; ++n)
-	{
-		int hole = 0;
-		for (int c = 0; c < le->height; ++c)
-		{
-			for (int r = 0; r < le->width; ++r)
-			{
-				if ((r - disp1[c*row + r] * (9 - n) / 10) >= 0)
-				{
-					//re2->imageData[c* le->width + r - (disparity_test->imageData[c*le->width + r] * (n + 1) / 10)] = (le->imageData[c * le->width + r] + ri->imageData[c * le->width + r - disparity_test->imageData[c*le->width + r]]) / 2.0;
-					R_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] =  (R_Channel_le->imageData[c * le->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
-					G_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] =  (G_Channel_le->imageData[c * le->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
-					B_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] =  (B_Channel_le->imageData[c * le->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
+	//for (int n = 0; n < 9; ++n)
+	//{
+	//	int hole = 0;
+	//	for (int c = 0; c < le->height; ++c)
+	//	{
+	//		for (int r = 0; r < le->width; ++r)
+	//		{
+	//			if ((r - disp1[c*row + r] * (9 - n) / 10) >= 0)
+	//			{
+	//				//re2->imageData[c* le->width + r - (disparity_test->imageData[c*le->width + r] * (n + 1) / 10)] = (le->imageData[c * le->width + r] + ri->imageData[c * le->width + r - disparity_test->imageData[c*le->width + r]]) / 2.0;
+	//				R_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] =  (R_Channel_le->imageData[c * le->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
+	//				G_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] =  (G_Channel_le->imageData[c * le->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
+	//				B_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] =  (B_Channel_le->imageData[c * le->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
 
-					//R_Channel_Re->imageData[c * le->width + r - (disparity_test->imageData[c*disparity_test->widthStep + r] * (9 - n) / 10)] = (R_Channel_le->imageData[c * le->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disparity_test->imageData[c * le->width + r]]) / 2; // B
-					//G_Channel_Re->imageData[c * le->width + r - (disparity_test->imageData[c*disparity_test->widthStep + r] * (9 - n) / 10)] = (G_Channel_le->imageData[c * le->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disparity_test->imageData[c * le->width + r]]) / 2; // G
-					//B_Channel_Re->imageData[c * le->width + r - (disparity_test->imageData[c*disparity_test->widthStep + r] * (9 - n) / 10)] = (B_Channel_le->imageData[c * le->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disparity_test->imageData[c * le->width + r]]) / 2; // R
-				}
-				else if ((r - (disp1[c*row + r] )) <= le->width)
-				{
-					R_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = R_Channel_ri->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)];
-					G_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = G_Channel_ri->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)];
-					B_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = B_Channel_ri->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)];
-					//re2->imageData[c* le->width + r - (disparity_test->imageData[c*le->width + r] * (n + 1) / 10)] = le->imageData[c * le->width + r];
-				}
-				else
-				{
-					R_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = 0;// R_Channel_le->imageData[c * le->width + r];
-					G_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = 0;// G_Channel_le->imageData[c * le->width + r];
-					B_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = 255;// B_Channel_le->imageData[c * le->width + r];
-					hole++;
-				}
-			}
-		}
-		cvMerge(B_Channel_Re, G_Channel_Re, R_Channel_Re, NULL, rgbRe);
-		cout << n << " th image " << endl << "width : " << le->width << " height : " << le->height << endl << "hole / size : " << (DOUBLE)hole << " / " << le->width*le->height << endl;
-		//cvSaveImage(filenames[n], re2);
-		cvSaveImage(filenames_c[n], rgbRe);
-		cvSetZero(R_Channel_Re);
-		cvSetZero(G_Channel_Re);
-		cvSetZero(B_Channel_Re);
-		cvSetZero(rgbRe);
-	}
-	
-
-
-
-	for (i = 0; i < le->height; ++i)
-	{
-		for (j = 0; j < le->width; ++j)
-		{
-			if (j < le->width / 2)
-				re2->imageData[i*le->width + j] = 0;
-			else
-				re2->imageData[i*le->width + j] = 255;
-		}
-	}
+	//				//R_Channel_Re->imageData[c * le->width + r - (disparity_test->imageData[c*disparity_test->widthStep + r] * (9 - n) / 10)] = (R_Channel_le->imageData[c * le->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disparity_test->imageData[c * le->width + r]]) / 2; // B
+	//				//G_Channel_Re->imageData[c * le->width + r - (disparity_test->imageData[c*disparity_test->widthStep + r] * (9 - n) / 10)] = (G_Channel_le->imageData[c * le->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disparity_test->imageData[c * le->width + r]]) / 2; // G
+	//				//B_Channel_Re->imageData[c * le->width + r - (disparity_test->imageData[c*disparity_test->widthStep + r] * (9 - n) / 10)] = (B_Channel_le->imageData[c * le->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disparity_test->imageData[c * le->width + r]]) / 2; // R
+	//			}
+	//			else if ((r - (disp1[c*row + r] )) <= le->width)
+	//			{
+	//				R_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = R_Channel_ri->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)];
+	//				G_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = G_Channel_ri->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)];
+	//				B_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = B_Channel_ri->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)];
+	//				//re2->imageData[c* le->width + r - (disparity_test->imageData[c*le->width + r] * (n + 1) / 10)] = le->imageData[c * le->width + r];
+	//			}
+	//			else
+	//			{
+	//				R_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = 0;// R_Channel_le->imageData[c * le->width + r];
+	//				G_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = 0;// G_Channel_le->imageData[c * le->width + r];
+	//				B_Channel_Re->imageData[c * le->width + r - (disp1[c*row + r] * (9 - n) / 10)] = 255;// B_Channel_le->imageData[c * le->width + r];
+	//				hole++;
+	//			}
+	//		}
+	//	}
+	//	cvMerge(B_Channel_Re, G_Channel_Re, R_Channel_Re, NULL, rgbRe);
+	//	cout << n << " th image " << endl << "width : " << le->width << " height : " << le->height << endl << "hole / size : " << (DOUBLE)hole << " / " << le->width*le->height << endl;
+	//	//cvSaveImage(filenames[n], re2);
+	//	cvSaveImage(filenames_c[n], rgbRe);
+	//	cvSetZero(R_Channel_Re);
+	//	cvSetZero(G_Channel_Re);
+	//	cvSetZero(B_Channel_Re);
+	//	cvSetZero(rgbRe);
+	//}
+	//
 
 
 
@@ -240,15 +200,10 @@ INT main(INT argc, CHAR *argv[])
 
 
 	// test - 중간 결과물 및 완성 결과물 윈도우 만들어서 보여주기
-	//cvNamedWindow("left original", 1); cvShowImage("left original", leftImg);
-	//cvNamedWindow("mid original", 1); cvShowImage("mid original", midImg);
-	//cvNamedWindow("right original", 1); cvShowImage("right original", rightImg);
-
-	//cvNamedWindow("disparity left, mid"); cvShowImage("disparity left, mid", disparity_img_L_M);
-	//cvNamedWindow("disparity mid, right"); cvShowImage("disparity mid, right", disparity_img_M_R);
-
-	cvNamedWindow("re", 1); cvShowImage("re", re2);
-
+	cvNamedWindow("left original", 1); cvShowImage("left original", leftImg);
+	cvNamedWindow("mid original", 1); cvShowImage("mid original", midImg);
+	cvNamedWindow("right original", 1); cvShowImage("right original", rightImg);
+	cvNamedWindow("1", 1); cvShowImage("1", disparity_test);
 	while (1)
 	{
 		int c = cvWaitKey(10);
@@ -263,8 +218,6 @@ INT main(INT argc, CHAR *argv[])
 
 
 	///fin. release 
-	cvReleaseStereoBMState(&BMState);
-
 	cvReleaseImage(&leftImg);
 	cvReleaseImage(&rightImg);
 	cvReleaseImage(&midImg);
@@ -282,27 +235,40 @@ INT main(INT argc, CHAR *argv[])
 }
 
 
+void runStereo(char*filename_disparity_map, char*filename_left_image, char*filename_right_image, int max_disparity, bool use_post_processing)
+{
+	double sigma = QX_DEF_SIGMA;
+	unsigned char***left, ***right, **disparity;
+	int h, w;
+
+	qx_image_size(filename_left_image, h, w);//obtain image size
+
+	left = qx_allocu_3(h, w, 3);//allocate memory
+	right = qx_allocu_3(h, w, 3);
+	disparity = qx_allocu(h, w);
+
+	qx_nonlocal_cost_aggregation m_nlca;//non-local cost aggregation class
+	m_nlca.init(h, w, max_disparity, sigma);//initialization
+
+	qx_loadimage(filename_left_image, left[0][0], h, w);//load left image
+	qx_loadimage(filename_right_image, right[0][0], h, w);//load right image
+
+	qx_timer timer;//
+	timer.start();
+
+	m_nlca.matching_cost(left, right);//compute matching cost
+	timer.time_display("Matching cost computation");
+
+	timer.start();
+	m_nlca.disparity(disparity, use_post_processing);//compute disparity
+	if (use_post_processing) timer.time_display("Non-local cost aggregation (including non-local post processing)");
+	else timer.time_display("Non-local cost aggregation (excluding non-local post processing)");
+
+	for (int y = 0; y<h; y++) for (int x = 0; x<w; x++) disparity[y][x] *= 256 / max_disparity;//rescale the disparity map for visualization
+	qx_saveimage(filename_disparity_map, disparity[0], h, w, 1);//write the obtained disparity map to the harddrive
 
 
-
-
-
-/* 참고 open cv 함수 및 자료
-IplImage* pImage = cvLoadImage("img.jpg", CV_LOAD_IMAGE_UNCHANGED);
-IplImage* R_Channel = cvCreateImage(cvGetSize(pImage), IPL_DEPTH_8U, 1);
-IplImage* G_Channel = cvCreateImage(cvGetSize(pImage), IPL_DEPTH_8U, 1);
-IplImage* B_Channel = cvCreateImage(cvGetSize(pImage), IPL_DEPTH_8U, 1);
-
-cvSplit(pImage, B_Channel, G_Channel, R_Channel, 0);
-cvMerge(B_Channel, G_Channel, R_Channel, NULL, dstCvArr);
-
-cvSaveImage
-
-
-
-frame->imageData[i * frame->widthStep + j + 0];
-frame->imageData[i * frame->widthStep + j + 1];
-frame->imageData[i * frame->widthStep + j + 2];
-
-BGR
-*/
+	qx_freeu_3(left); left = NULL;//free memory
+	qx_freeu_3(right); right = NULL;
+	qx_freeu(disparity); disparity = NULL;
+}

@@ -13,21 +13,69 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="stereo maching">
+      <UniqueIdentifier>{01c3e930-0226-45ad-90c5-27536c64def6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dy lib">
+      <UniqueIdentifier>{e6b15b42-1cf4-4b32-b3cc-c2e89f65d007}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="basic.h">
+      <Filter>stereo maching</Filter>
+    </ClInclude>
+    <ClInclude Include="ctmf.h">
+      <Filter>stereo maching</Filter>
+    </ClInclude>
+    <ClInclude Include="kruskal.h">
+      <Filter>stereo maching</Filter>
+    </ClInclude>
+    <ClInclude Include="nonlocal.h">
+      <Filter>stereo maching</Filter>
+    </ClInclude>
+    <ClInclude Include="readPPM.h">
+      <Filter>stereo maching</Filter>
+    </ClInclude>
     <ClInclude Include="dy_lib.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>dy lib</Filter>
+    </ClInclude>
+    <ClInclude Include="treeFilter.h">
+      <Filter>stereo maching</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dy_lib.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="test.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="basic.cpp">
+      <Filter>stereo maching</Filter>
+    </ClCompile>
+    <ClCompile Include="kruskal.cpp">
+      <Filter>stereo maching</Filter>
+    </ClCompile>
+    <ClCompile Include="nonlocal.cpp">
+      <Filter>stereo maching</Filter>
+    </ClCompile>
+    <ClCompile Include="readPPM.cpp">
+      <Filter>stereo maching</Filter>
+    </ClCompile>
+    <ClCompile Include="runSM.h">
+      <Filter>stereo maching</Filter>
+    </ClCompile>
+    <ClCompile Include="0731.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="dy_lib.cpp">
+      <Filter>dy lib</Filter>
+    </ClCompile>
+    <ClCompile Include="ctmf.c">
+      <Filter>stereo maching</Filter>
+    </ClCompile>
+    <ClCompile Include="treeFilter.cpp">
+      <Filter>stereo maching</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

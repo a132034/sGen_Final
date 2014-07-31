@@ -84,12 +84,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="basic.h" />
+    <ClInclude Include="ctmf.h" />
     <ClInclude Include="dy_lib.h" />
+    <ClInclude Include="kruskal.h" />
+    <ClInclude Include="nonlocal.h" />
+    <ClInclude Include="readPPM.h" />
+    <ClInclude Include="treeFilter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="0731.cpp" />
+    <ClCompile Include="basic.cpp" />
+    <ClCompile Include="ctmf.c" />
     <ClCompile Include="dy_lib.cpp" />
+    <ClCompile Include="kruskal.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="runSM.h" />
+    <ClCompile Include="nonlocal.cpp" />
+    <ClCompile Include="readPPM.cpp" />
     <ClCompile Include="test.cpp" />
+    <ClCompile Include="treeFilter.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
