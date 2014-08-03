@@ -21,6 +21,8 @@
 #define PI acos(-1.0)
 #define FORWARD 1
 #define BACKWARD -1
+#define PLANAR 1
+#define INTERLEAVED 2
 
 /*********************************** HEADER µî. *********************************/
 /* BMP FILE & INFORMATION HEADER*/
@@ -92,8 +94,8 @@ BYTE* ReadPbm(INT *row, INT *col, LPCSTR  filename);
 VOID WritePbm(INT row, INT col, BYTE* img, LPCSTR  filename);
 
 /* PPM FILE FORMAT */
-BYTE* ReadPpm(INT *row, INT *col, LPCSTR  filename);
-VOID WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename);
+BYTE* ReadPpm(INT *row, INT *col, LPCSTR  filename, INT order = 1);
+VOID WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename, INT order = 1);
 
 /* BMP FILE FORMAT */
 BYTE* ReadBmp(INT *row, INT *col, LPCSTR  filename);
