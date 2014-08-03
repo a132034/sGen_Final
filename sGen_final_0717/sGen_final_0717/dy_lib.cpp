@@ -482,19 +482,148 @@ BYTE* ReadBmp(INT *row, INT *col, LPCSTR  filename)
 	return rawdata;
 }
 
-VOID WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename)
+VOID WritePpm(INT row, INT col, BYTE* img, LPCSTR  filename, INT order)
 {
+	std::ofstream file;
+	register INT i;
+	INT size;
+	BYTE *buffer = NULL, *rgb, *handle = NULL;
+	INT quarter = 4, round, qSize;
+	char* header = "P6\n# Created by Vision Image Processing(VIP) Lab, Sangmyung Univ. Korea \n";
 
+	file.open(filename, std::ios::out | std::ios::binary);
+	if (file.fail())
+	{
+		std::cout << "file open error in WritePgm function" << std::endl;
+		exit(1);
+	}
+
+	// planar
+	else if (order == PLANAR)
+	{
+		size = row * col;
+		qSize = size / quarter;
+		round = size - quarter * qSize;
+
+		rgb = img;
+		buffer = new BYTE[size * 3];
+		handle = buffer;
+
+		if (buffer == NULL)
+		{
+			std::cerr << "error: out of memory in WritePpm function" << std::endl;
+			exit(1);
+		}
+
+		for (i = 0; i < qSize; ++i)
+		{
+			handle[0] = *(rgb);
+			handle[1] = *(rgb + size);
+			handle[2] = *(rgb + 2 * size);
+			rgb++;
+
+			handle[3] = *(rgb);
+			handle[4] = *(rgb + size);
+			handle[5] = *(rgb + 2 * size);
+			rgb++;
+
+			handle[6] = *(rgb);
+			handle[7] = *(rgb + size);
+			handle[8] = *(rgb + 2 * size);
+			rgb++;
+
+			handle[9] = *(rgb);
+			handle[10] = *(rgb + size);
+			handle[11] = *(rgb + 2 * size);
+			rgb++;
+
+			handle += 12;
+		}
+
+		for (i = 0; i < round; ++i)
+		{
+			*handle = *(rgb); handle++;
+			*handle = *(rgb + size); handle++;
+			*handle = *(rgb + 2 * size); handle++;
+			rgb++;
+		}
+	}
+
+	//header information writing phase 'P6' is for ppm file format
+	file << header << col << ' ' << row << std::endl << "255" << std::endl;
+
+	if (order == INTERLEAVED)
+	{
+		file.write((char*)img, row*col * 3);
+	}
+	else if (order == PLANAR)
+	{
+		file.write((char*)buffer, row*col * 3);
+	}
+	file.close();
 }
-BYTE* ReadPpm(INT *row, INT *col, LPCSTR  filename)
+BYTE* ReadPpm(INT *row, INT *col, LPCSTR  filename, INT order)
 {
 	std::ifstream file;
 	register INT i;
 	INT size;
-	BYTE *buffer, *rgbp = NULL, *rgbPtr;
-	return rgbp;
+	BYTE *buffer = NULL, *rgb, *handle;
 
+	file.open(filename, std::ios::in | std::ios::binary);
+	if (file.fail())
+	{
+		std::cout << "file open error in ReadPpm function" << std::endl;
+		exit(1);
+	}
+	//header information reading phase 'P5' is for pgm file format
+	if ((file.get() != 'P') || (file.get() != '6'))
+	{
+		std::cerr << "error : image format is not a ppm" << std::endl;
+		exit(1);
+	}
+	//read col & row
+	*col = Read_Int_For_P(file);
+	*row = Read_Int_For_P(file);
+	Read_Int_For_P(file);
+
+	size = (*row)*(*col);
+
+	rgb = new byte[size * 3];
+	handle = rgb;
+
+	buffer = new byte[size * 3];
+	if (buffer == NULL)
+	{
+		std::cerr << "error: out of memory in ReadPpm function" << std::endl;
+		exit(1);
+	}
+
+	// read image from file
+	file.read((char*)buffer, size * 3);
+	std::cout << "444444" << std::endl;
+	if (order == PLANAR)
+	{
+		// interleaved RGB order into planar RGB order
+		for (i = 0; i < size; ++i)
+		{
+			rgb[0] = buffer[0];				//R
+			rgb[size] = buffer[1];			//G
+			rgb[2 * size] = buffer[2];		//B
+			rgb++;
+			buffer += 3;
+		}
+
+		buffer -= size;
+		buffer -= size;
+		buffer -= size;
+
+		delete[]buffer;
+	}
+
+	file.close();
+	return handle;
 }
+
 
 
 
