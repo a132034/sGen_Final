@@ -1,4 +1,4 @@
-﻿빌드 시작: 2014-08-03 오후 7:55:53
+﻿빌드 시작: 2014-08-06 오전 11:24:53
      1>2 노드의 "C:\Users\dypark\Desktop\Workspace\sgen_final\sGen_final_0717\sGen_final_0717\sGen_final_0717.vcxproj" 프로젝트(Build 대상)입니다.
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /IC:\opencv\build\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
@@ -7,8 +7,6 @@
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(67): warning C4244: '인수' : 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(68): warning C4244: '인수' : 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(70): warning C4244: '인수' : 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(145): warning C4309: '=' : 상수 값이 잘립니다.
-     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(173): warning C4309: '=' : 상수 값이 잘립니다.
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(32): warning C4101: 'i' :참조되지 않은 지역 변수입니다.
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(32): warning C4101: 'j' :참조되지 않은 지역 변수입니다.
        Link:
@@ -28,4 +26,4 @@
 
 빌드했습니다.
 
-경과 시간: 00:00:02.22
+경과 시간: 00:00:02.48

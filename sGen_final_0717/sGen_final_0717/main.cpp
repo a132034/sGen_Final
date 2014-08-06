@@ -117,6 +117,9 @@ INT main()
 	// 열린 두장의 디스패리티 & 세장의 원본 - disparity_img_L_M disparity_img_M_R leftImg midImg rightImg
 	// 이제 view interpolation을 시작한다. 
 	result = cvCreateImage(cvSize(leftImg->width, leftImg->height), IPL_DEPTH_8U, 3);
+	cvSetZero(R_Channel_Re);
+	cvSetZero(G_Channel_Re);
+	cvSetZero(B_Channel_Re);
 	for (n = 0; n < NUM_OF_INTERPOLATIED_IMAGE; ++n) // NUM_OF_INTERPOLATIED_IMAGE는 항상 짝수일 경우만 생각. 
 	{
 
@@ -128,53 +131,57 @@ INT main()
 					{
 						if ((r - disparity_img_L_M[c*width + r] * (9 - n) / 10) >= 0)
 						{
-							R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (R_Channel_le->imageData[c * leftImg->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
-							G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (G_Channel_le->imageData[c * leftImg->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
-							B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (B_Channel_le->imageData[c * leftImg->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
-						}
-						else if ((r - (disparity_img_L_M[c*width + r])) <= leftImg->width)
-						{
-							R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = R_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
-							G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = G_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
-							B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = B_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
-						}
+							if ((r - (disparity_img_L_M[c*width + r])) <= leftImg->width)
+							{
+								R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = R_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
+								G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = G_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
+								B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = B_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
+							}
+							else
+							{
+								R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (R_Channel_le->imageData[c * leftImg->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
+								G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (G_Channel_le->imageData[c * leftImg->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
+								B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (B_Channel_le->imageData[c * leftImg->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
+							}
+						}// 그니까 1번. 이 인덱스가 0보다 크면 일단 처음꺼 가. 그리고 0보다 큰데 위쓰보다 크면 안되니까 그거보다 큰거는 또 안되
+						//그리고 2번. 0보다도 작으면 이건 뭐... 어쩔수가있나? 없지않나 그냥 엘스처리 해버려 
 						else
 						{
-							R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 0;//R_Channel_le->imageData[c * le->width + r];
-							G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 0;// G_Channel_le->imageData[c * le->width + r];
-							B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 255;// B_Channel_le->imageData[c * le->width + r];
+							//R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 0;//R_Channel_le->imageData[c * le->width + r];
+							//G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 0;// G_Channel_le->imageData[c * le->width + r];
+							//B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 255;// B_Channel_le->imageData[c * le->width + r];
 						}
 					}
 				}
 		}
-		else
-		{
-			for (c = 0; c < leftImg->height; ++c)
-			{
-				for (r = 0; r < leftImg->width; ++r)
-				{
-					if ((r - disparity_img_M_R[c*width + r] * (9 - n) / 10) >= 0)
-					{
-						R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = (R_Channel_mi->imageData[c * leftImg->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
-						G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = (G_Channel_mi->imageData[c * leftImg->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
-						B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = (B_Channel_mi->imageData[c * leftImg->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
+		//else
+		//{
+		//	for (c = 0; c < leftImg->height; ++c)
+		//	{
+		//		for (r = 0; r < leftImg->width; ++r)
+		//		{
+		//			if ((r - disparity_img_M_R[c*width + r] * (9 - n) / 10) >= 0)
+		//			{
+		//				R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = (R_Channel_mi->imageData[c * leftImg->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
+		//				G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = (G_Channel_mi->imageData[c * leftImg->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
+		//				B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = (B_Channel_mi->imageData[c * leftImg->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
 
-					}
-					else if ((r - (disparity_img_M_R[c*width + r])) <= leftImg->width)
-					{
-						R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = R_Channel_ri->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)];
-						G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = G_Channel_ri->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)];
-						B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = B_Channel_ri->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)];
-					}
-					else
-					{
-						R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = 0;// R_Channel_le->imageData[c * le->width + r];
-						G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = 0;// G_Channel_le->imageData[c * le->width + r];
-						B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = 255;// B_Channel_le->imageData[c * le->width + r];
-					}
-				}
-			}
-		}
+		//			}
+		//			else if ((r - (disparity_img_M_R[c*width + r])) <= leftImg->width)
+		//			{
+		//				R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = R_Channel_ri->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)];
+		//				G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = G_Channel_ri->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)];
+		//				B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = B_Channel_ri->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)];
+		//			}
+		//			else
+		//			{
+		//				R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = 0;// R_Channel_le->imageData[c * le->width + r];
+		//				G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = 0;// G_Channel_le->imageData[c * le->width + r];
+		//				B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_M_R[c*width + r] * (9 - n) / 10)] = 255;// B_Channel_le->imageData[c * le->width + r];
+		//			}
+		//		}
+		//	}
+		//}
 	
 		cvMerge(B_Channel_Re, G_Channel_Re, R_Channel_Re, NULL, result);
 		cout << " 6번 view interpolation 완료 - " << n << endl;
