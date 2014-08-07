@@ -9,8 +9,6 @@
 #include <math.h>
 #include <numeric>
 #include <vector>
-#include <direct.h>
-#include <io.h>
 #include <time.h>
 #include <string>
 #include <memory.h>
@@ -37,8 +35,9 @@ using namespace std;  // std c++ libs implemented in std
 #define QX_DEF_STRING_LENGTH			300
 class qx_timer{ public: void start(); double stop(); void time_display(char *disp = "", int nr_frame = 1); void fps_display(char *disp = "", int nr_frame = 1); private: double m_pc_frequency; __int64 m_counter_start; };//clock_t m_begin,m_end;};
 
-inline float qx_max_f3(float*a){ return(max(max(a[0], a[1]), a[2])); }
-inline float qx_min_f3(float*a){ return(min(min(a[0], a[1]), a[2])); }
+
+inline float qx_max_f3(float*a){ return(std::max(std::max(a[0], a[1]), a[2])); }
+inline float qx_min_f3(float*a){ return(std::min(std::min(a[0], a[1]), a[2])); }
 inline double qx_div(double x, double y){ return((y != 0) ? (x / y) : 0); }
 /*Box filter*/
 void boxcar_sliding_window_x(double *out, double *in, int h, int w, int radius);
@@ -60,9 +59,9 @@ inline void qx_image_dot_product(double*out, double*a, double*b, int len){ for (
 //inline float max(float a,float b){if(a>b) return(a); else return(b);}
 inline int qx_sum_u3(unsigned char *a) { return(a[0] + a[1] + a[2]); }
 inline double qx_sum_d3(double*a){ return(a[0] + a[1] + a[2]); }
-inline unsigned char qx_min_u3(unsigned char *a){ return(min(min(a[0], a[1]), a[2])); }
-inline unsigned char qx_max_u3(unsigned char *a){ return(max(max(a[0], a[1]), a[2])); }
-inline unsigned char qx_max_u3(unsigned char r, unsigned char g, unsigned char b){ return(max(max(r, g), b)); }
+inline unsigned char qx_min_u3(unsigned char *a){ return(std::min(std::min(a[0], a[1]), a[2])); }
+inline unsigned char qx_max_u3(unsigned char *a){ return(std::max(std::max(a[0], a[1]), a[2])); }
+inline unsigned char qx_max_u3(unsigned char r, unsigned char g, unsigned char b){ return(std::max(std::max(r, g), b)); }
 inline void image_zero(float **in, int h, int w, float zero = 0){ memset(in[0], zero, sizeof(float)*h*w); }
 inline void image_zero(double **in, int h, int w, double zero = 0){ memset(in[0], zero, sizeof(double)*h*w); }
 inline void image_zero(unsigned char**in, int h, int w, unsigned char zero = 0){ memset(in[0], zero, sizeof(unsigned char)*h*w); }
