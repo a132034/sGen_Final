@@ -69,8 +69,8 @@ VOID DFT_1D(T* real, T* imagine, CONST INT Length, CONST INT Forward)
 	T* tr = new T[sizeof(T)*N]; // temp re 
 	T* ti = new T[sizeof(T)*N]; // temp im
 
-	CopyMemory(tr, real, sizeof(T)*N);
-	CopyMemory(ti, imagine, sizeof(T)*N);
+	memcpy(tr, real, sizeof(T)*N);
+	memcpy(ti, imagine, sizeof(T)*N);
 
 	T re, im, temp;
 	T cosine, sine;
@@ -465,7 +465,7 @@ BYTE* ReadBmp(INT *row, INT *col, LPCSTR  filename)
 	}
 	file.close();
 
-	CopyMemory(reverse, rawdata, Size);
+	memcpy(reverse, rawdata, Size);
 	//std::memcpy(reverse, rawdata, Size);
 
 	for (i = 0; i < Bmp.Height; ++i)

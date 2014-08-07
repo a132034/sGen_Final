@@ -39,9 +39,9 @@ INT main()
 	IplImage *disparity_test, *disparity_test2;
 
 	//for image names
-	char *original_left							=	"TL.jpg";
-	char *original_mid							=	"TR.jpg";
-	char *original_right						=	"TL.jpg";
+	char *original_left							=	"le.jpg";
+	char *original_mid							=	"mi.jpg";
+	char *original_right						=	"le.jpg";
 	char *disp_l_m								=	"disp_l_m.pgm";
 	char *disp_m_r								=	"disp_m_r.pgm";
 	char *stereo_left							=	"1.ppm";
@@ -82,8 +82,8 @@ INT main()
 	//저장한 파일을 다시 불러와서 stereomatching (rectify 과정 우선 생략)
 	
 
-	runStereo(disp_l_m, stereo_left, stereo_mid, MAX_DISPARITY, true);//including non-local post processing
-	runStereo(disp_m_r, stereo_mid, stereo_right, MAX_DISPARITY, true);//including non-local post processing
+	runStereo(disp_l_m, stereo_mid, stereo_left, MAX_DISPARITY, true);//including non-local post processing
+	runStereo(disp_m_r, stereo_right, stereo_mid, MAX_DISPARITY, true);//including non-local post processing
 	cout << " 3번 스테레오 매칭 완료!!! (디스패리티 2장 나옴! - ppm) " << endl;
 
 	/// 3-3. disparity map과 raw data를 가지고 view interpolation(backward projection)
@@ -122,7 +122,6 @@ INT main()
 	cvSetZero(B_Channel_Re);
 	for (n = 0; n < NUM_OF_INTERPOLATIED_IMAGE; ++n) // NUM_OF_INTERPOLATIED_IMAGE는 항상 짝수일 경우만 생각. 
 	{
-
 		if (n < NUM_OF_INTERPOLATIED_IMAGE / 2)
 		{
 			for (c = 0; c < leftImg->height; ++c)
@@ -133,15 +132,15 @@ INT main()
 						{
 							if ((r - (disparity_img_L_M[c*width + r])) <= leftImg->width)
 							{
-								R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = R_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
-								G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = G_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
-								B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = B_Channel_mi->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
+								R_Channel_Re->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (n+1) / 10)] = R_Channel_mi->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
+								G_Channel_Re->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (n+1) / 10)] = G_Channel_mi->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
+								B_Channel_Re->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (n+1) / 10)] = B_Channel_mi->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)];
 							}
 							else
 							{
-								R_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (R_Channel_le->imageData[c * leftImg->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
-								G_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (G_Channel_le->imageData[c * leftImg->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
-								B_Channel_Re->imageData[c * leftImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = (B_Channel_le->imageData[c * leftImg->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
+								R_Channel_Re->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 255;// (R_Channel_le->imageData[c * midImg->width + r]);// +R_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // B
+								G_Channel_Re->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 255;// (G_Channel_le->imageData[c * midImg->width + r]);// +G_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // G
+								B_Channel_Re->imageData[c * midImg->width + r - (disparity_img_L_M[c*width + r] * (9 - n) / 10)] = 0;// (B_Channel_le->imageData[c * midImg->width + r]);// +B_Channel_ri->imageData[c * le->width + r - disp1[c*row + r]]) / 2; // R
 							}
 						}// 그니까 1번. 이 인덱스가 0보다 크면 일단 처음꺼 가. 그리고 0보다 큰데 위쓰보다 크면 안되니까 그거보다 큰거는 또 안되
 						//그리고 2번. 0보다도 작으면 이건 뭐... 어쩔수가있나? 없지않나 그냥 엘스처리 해버려 

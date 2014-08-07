@@ -1,14 +1,22 @@
-﻿빌드 시작: 2014-08-06 오전 11:24:53
+﻿빌드 시작: 2014-08-07 오후 9:39:05
      1>2 노드의 "C:\Users\dypark\Desktop\Workspace\sgen_final\sGen_final_0717\sGen_final_0717\sGen_final_0717.vcxproj" 프로젝트(Build 대상)입니다.
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /IC:\opencv\build\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /IC:\opencv\build\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt 0731.cpp dy_lib.cpp main.cpp test.cpp
          main.cpp
      1>c:\opencv\build\include\opencv2\flann\dist.h : warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
-     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(67): warning C4244: '인수' : 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(68): warning C4244: '인수' : 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(70): warning C4244: '인수' : 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(66): warning C4244: '인수' : 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(67): warning C4244: '인수' : 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\basic.h(69): warning C4244: '인수' : 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(141): warning C4309: '=' : 상수 값이 잘립니다.
+     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(142): warning C4309: '=' : 상수 값이 잘립니다.
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(32): warning C4101: 'i' :참조되지 않은 지역 변수입니다.
      1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\main.cpp(32): warning C4101: 'j' :참조되지 않은 지역 변수입니다.
+         dy_lib.cpp
+     1>c:\users\dypark\desktop\workspace\sgen_final\sgen_final_0717\sgen_final_0717\dy_lib.cpp(277): warning C4805: '!=' : 연산에 'INT' 형식과 'bool' 형식을 함께 사용하는 것은 안전하지 않습니다.
+         코드를 생성하고 있습니다...
+         건너뛰고 있습니다... (관련된 변경 내용 없음)
+         test.cpp
+         0731.cpp
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\dypark\Desktop\Workspace\sgen_final\sGen_final_0717\Debug\sGen_final_0717.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\opencv\build\x86\vc12\lib opencv_calib3d248d.lib opencv_contrib248d.lib opencv_core248d.lib opencv_features2d248d.lib opencv_flann248d.lib opencv_gpu248d.lib opencv_highgui248d.lib opencv_imgproc248d.lib opencv_legacy248d.lib opencv_ml248d.lib opencv_nonfree248d.lib opencv_objdetect248d.lib opencv_photo248d.lib opencv_stitching248d.lib opencv_superres248d.lib opencv_ts248d.lib opencv_video248d.lib opencv_videostab248d.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\dypark\Desktop\Workspace\sgen_final\sGen_final_0717\Debug\sGen_final_0717.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\dypark\Desktop\Workspace\sgen_final\sGen_final_0717\Debug\sGen_final_0717.lib" /MACHINE:X86 Debug\0731.obj
          Debug\basic.obj
@@ -26,4 +34,4 @@
 
 빌드했습니다.
 
-경과 시간: 00:00:02.48
+경과 시간: 00:00:02.51

@@ -14,9 +14,27 @@
 
 #include	<cmath>
 #include	<memory>
-#include	<Windows.h>
 #include	<fstream>
 #include	<iostream>
+
+#define CONST const
+
+typedef unsigned long       DWORD;
+typedef int                 BOOL;
+typedef double              DOUBLE;
+typedef unsigned char       BYTE, byte;
+typedef unsigned short      WORD;
+typedef float               FLOAT;
+typedef void                VOID;
+typedef char                CHAR;
+typedef const char*         LPCSTR;
+
+
+typedef int                 INT;
+typedef unsigned int        UINT;
+typedef unsigned int        *PUINT;
+
+
 
 #define PI acos(-1.0)
 #define FORWARD 1
