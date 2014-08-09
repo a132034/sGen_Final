@@ -18,13 +18,46 @@
 #include	"dy_lib.h"
 #include	"basic.h"
 #include	"readPPM.h"
-#include	"nonlocal.h"
 #define QX_DEF_SIGMA							0.1//0.1
 #define NUM_OF_INTERPOLATIED_IMAGE				8
 #define MAX_DISPARITY							20
+#ifndef QX_NONLOCAL_COST_AGGREGATION_H
+#define QX_NONLOCAL_COST_AGGREGATION_H
+#include "treeFilter.h"
 
 using namespace std;
 void runStereo(char*filename_disparity_map, char*filename_left_image, char*filename_right_image, int max_disparity, bool use_post_processing);
+
+class qx_nonlocal_cost_aggregation
+{
+public:
+	qx_nonlocal_cost_aggregation();
+	~qx_nonlocal_cost_aggregation();
+	void clean();
+	int init(int h, int w, int nr_plane,
+		double sigma_range = 0.1,
+		double max_color_difference = 7,
+		double max_gradient_difference = 2,
+		double weight_on_color = 0.11
+		);
+	int matching_cost(unsigned char***left, unsigned char***right);
+	int disparity(unsigned char**disparity, bool use_nonlocal_post_processing = false);
+private:
+	void matching_cost_from_color_and_gradient(unsigned char***left, unsigned char***right);
+	void compute_gradient(float**gradient, unsigned char***image);
+	void compute_filter_weights(unsigned char***texture);
+	void filter(float**image_filtered, float**image, bool compute_weight = true);
+private:
+	qx_tree_filter m_tf, m_tf_right;
+	int	m_h, m_w, m_nr_plane; double m_max_color_difference, m_max_gradient_difference, m_weight_on_color, m_weight_on_color_inv;
+	unsigned char**m_disparity, **m_disparity_right, **m_mask_occlusion, ***m_buf_u2;
+	double m_table[256], m_sigma_range;
+	unsigned char***m_left, ***m_right, ****m_buf_u3, ***m_image_shifted, ***m_image_temp;
+	float***m_buf_f2, **m_cost_min, **m_cost_temp, **m_cost, **m_gradient_left, **m_gradient_right, **m_gradient_shifted;
+	double****m_buf_d3, ***m_cost_vol, ***m_cost_vol_right, ***m_cost_vol_backup, ***m_cost_vol_temp;
+};
+#endif
+
 
 INT main() 
 {
@@ -39,9 +72,9 @@ INT main()
 	IplImage *disparity_test, *disparity_test2;
 
 	//for image names
-	char *original_left							=	"flowerpots_view5.png";
-	char *original_mid							=	"flowerpots_view1.png";
-	char *original_right						=	"flowerpots_view5.png";
+	char *original_left							=	"view5.png";
+	char *original_mid							=	"view1.png";
+	char *original_right						=	"view5.png";
 	char *disp_l_m								=	"disp_l_m.pgm";
 	char *disp_m_r								=	"disp_m_r.pgm";
 	char *stereo_left							=	"1.ppm";
@@ -83,13 +116,13 @@ INT main()
 	
 
 	//runStereo(disp_l_m, stereo_mid, stereo_left, MAX_DISPARITY, true);//including non-local post processing
-	//runStereo(disp_m_r, stereo_right, stereo_mid, MAX_DISPARITY, true);//including non-local post processing
+	runStereo(disp_m_r, stereo_right, stereo_mid, MAX_DISPARITY, true);//including non-local post processing
 	cout << " 3번 스테레오 매칭 완료!!! (디스패리티 2장 나옴! - ppm) " << endl;
 
 	/// 3-3. disparity map과 raw data를 가지고 view interpolation(backward projection)
 	// 다시 저장된 디스패리티 맵을 꺼내옴(이걸 두번 하면 됨. 	
-	disparity_img_L_M = ReadPgm(&height, &width, "disp_l_m.pgm");
-	disparity_img_M_R = ReadPgm(&height, &width, "disp_m_r.pgm");
+	disparity_img_L_M = ReadPgm(&height, &width, "flowerpots_disp1.pgm");
+	disparity_img_M_R = ReadPgm(&height, &width, "flowerpots_disp1.pgm");
 	cout << " 4번 디스패리티 열기 완료!!!(ppm -> byte)" << endl;
 
 	IplImage* R_Channel_le = cvCreateImage(cvGetSize(leftImg), IPL_DEPTH_8U, 1); // for left
@@ -180,16 +213,16 @@ INT main()
 	//cvNamedWindow("left original", 1); cvShowImage("left original", leftImg);
 	/*cvNamedWindow("mid original", 1); cvShowImage("mid original", midImg);
 	cvNamedWindow("right original", 1); cvShowImage("right original", rightImg);*/
-	//disparity_test = cvLoadImage(disp_l_m); disparity_test2 = cvLoadImage(disp_m_r);
-	//cvNamedWindow("1", 1); cvShowImage("1", disparity_test);
-	//cvNamedWindow("2", 1); cvShowImage("2", disparity_test2);
+	disparity_test = cvLoadImage(disp_l_m); disparity_test2 = cvLoadImage(disp_m_r);
+	cvNamedWindow("1", 1); cvShowImage("1", disparity_test);
+	cvNamedWindow("2", 1); cvShowImage("2", disparity_test2);
 
-	//while (1)
-	//{
-	//	int c = cvWaitKey(10);
-	//	if (c == 27)
-	//		break;
-	//}
+	while (1)
+	{
+		int c = cvWaitKey(10);
+		if (c == 27)
+			break;
+	}
 
 
 	///fin. release 
@@ -260,4 +293,158 @@ void runStereo(char*filename_disparity_map, char*filename_left_image, char*filen
 	qx_freeu_3(left); left = NULL;//free memory
 	qx_freeu_3(right); right = NULL;
 	qx_freeu(disparity); disparity = NULL;
+}
+
+
+/*$Id: qx_nonlocal_cost_aggregation.cpp,v 1.1 2007/02/16 04:11:12 liiton Exp $*/
+#include "basic.h"
+#include "nonlocal.h"
+qx_nonlocal_cost_aggregation::qx_nonlocal_cost_aggregation()
+{
+	m_buf_u2 = NULL;
+	m_buf_u3 = NULL;
+	m_buf_f2 = NULL;
+	m_buf_d3 = NULL;
+}
+qx_nonlocal_cost_aggregation::~qx_nonlocal_cost_aggregation()
+{
+	clean();
+}
+void qx_nonlocal_cost_aggregation::clean()
+{
+	qx_freeu_3(m_buf_u2); m_buf_u2 = NULL;
+	qx_freeu_4(m_buf_u3); m_buf_u3 = NULL;
+	qx_freef_3(m_buf_f2); m_buf_f2 = NULL;
+	qx_freed_4(m_buf_d3); m_buf_d3 = NULL;
+}
+int qx_nonlocal_cost_aggregation::init(int h, int w, int nr_plane, double sigma_range, double max_color_difference, double max_gradient_difference, double weight_on_color)
+{
+	clean();
+	m_h = h; m_w = w; m_nr_plane = nr_plane; m_sigma_range = sigma_range;
+	m_max_color_difference = max_color_difference; m_max_gradient_difference = max_gradient_difference;
+	m_weight_on_color = weight_on_color;
+	m_weight_on_color_inv = 1 - m_weight_on_color;
+
+	m_buf_f2 = qx_allocf_3(6, m_h, m_w);
+	m_buf_d3 = qx_allocd_4(4, m_h, m_w, m_nr_plane);
+	m_cost_vol = m_buf_d3[0];
+	m_cost_vol_backup = m_buf_d3[1];
+	m_cost_vol_temp = m_buf_d3[2];
+	m_cost_vol_right = m_buf_d3[3];
+	m_cost_min = m_buf_f2[0];
+	m_cost_temp = m_buf_f2[1];
+	m_cost = m_buf_f2[2];
+	m_gradient_shifted = m_buf_f2[3];
+	m_gradient_left = m_buf_f2[4];
+	m_gradient_right = m_buf_f2[5];
+	for (int y = 0; y<m_h; y++) for (int x = 0; x<m_w; x++) m_cost_temp[y][x] = QX_DEF_FLOAT_MAX;
+	m_buf_u3 = qx_allocu_4(2, m_h, m_w, 3);
+	m_image_shifted = m_buf_u3[0];
+	m_image_temp = m_buf_u3[1];
+	m_buf_u2 = qx_allocu_3(3, m_h, m_w);
+	m_disparity = m_buf_u2[0];
+	m_disparity_right = m_buf_u2[1];
+	m_mask_occlusion = m_buf_u2[2];
+
+
+	for (int i = 0; i<256; i++) m_table[i] = exp(-double(i) / (m_sigma_range * 255));
+	m_tf.init(m_h, m_w, 3, m_sigma_range, 4);
+	m_tf_right.init(m_h, m_w, 3, m_sigma_range, 4);
+	return(0);
+}
+int qx_nonlocal_cost_aggregation::matching_cost(unsigned char***left, unsigned char***right)
+{
+	m_left = left; m_right = right;
+	matching_cost_from_color_and_gradient(left, right);
+	image_copy(m_cost_vol_backup, m_cost_vol, m_h, m_w, m_nr_plane);
+	qx_stereo_flip_corr_vol(m_cost_vol_right, m_cost_vol, m_h, m_w, m_nr_plane);
+
+	m_tf.build_tree(m_left[0][0]);
+	m_tf_right.build_tree(m_right[0][0]);
+	return(0);
+}
+int qx_nonlocal_cost_aggregation::disparity(unsigned char**disparity, bool use_nonlocal_post_processing)
+{
+	int radius = 2;
+	image_copy(m_cost_vol, m_cost_vol_backup, m_h, m_w, m_nr_plane);
+	m_tf.filter(m_cost_vol[0][0], m_cost_vol_temp[0][0], m_nr_plane);
+	depth_best_cost(m_disparity, m_cost_vol, m_h, m_w, m_nr_plane);
+	ctmf(m_disparity[0], disparity[0], m_w, m_h, m_w, m_w, radius, 1, m_h*m_w);
+	//image_copy(disparity,m_disparity,m_h,m_w);
+
+	if (use_nonlocal_post_processing)
+	{
+		image_copy(m_cost_vol, m_cost_vol_right, m_h, m_w, m_nr_plane);
+		m_tf_right.filter(m_cost_vol[0][0], m_cost_vol_temp[0][0], m_nr_plane);
+		depth_best_cost(m_disparity, m_cost_vol, m_h, m_w, m_nr_plane);
+		ctmf(m_disparity[0], m_disparity_right[0], m_w, m_h, m_w, m_w, radius, 1, m_h*m_w);
+		//image_display(m_disparity_right,m_h,m_w);
+		//image_display(disparity,m_h,m_w);
+
+		//qx_occlusion_solver_left_right(disparity,m_disparity_right,m_h,m_w,m_nr_plane,false);
+		qx_detect_occlusion_left_right(m_mask_occlusion, disparity, m_disparity_right, m_h, m_w, m_nr_plane);
+		image_zero(m_cost_vol, m_h, m_w, m_nr_plane);
+		//int th=int(0.1*m_nr_plane+0.5);
+		for (int y = 0; y<m_h; y++) for (int x = 0; x<m_w; x++) if (!m_mask_occlusion[y][x])
+		{
+			for (int d = 0; d<m_nr_plane; d++)
+				//m_cost_vol[y][x][d]=min(abs(disparity[y][x]-d),th);
+				//m_cost_vol[y][x][d]=(disparity[y][x]-d)*(disparity[y][x]-d);
+				m_cost_vol[y][x][d] = abs(disparity[y][x] - d);
+		}
+		m_tf.update_table(m_sigma_range / 2);
+		m_tf.filter(m_cost_vol[0][0], m_cost_vol_temp[0][0], m_nr_plane);
+		//depth_best_cost(disparity,m_cost_vol,m_h,m_w,m_nr_plane);
+		depth_best_cost(m_disparity, m_cost_vol, m_h, m_w, m_nr_plane);
+		ctmf(m_disparity[0], disparity[0], m_w, m_h, m_w, m_w, radius, 1, m_h*m_w);
+
+	}
+	return(0);
+}
+void qx_nonlocal_cost_aggregation::matching_cost_from_color_and_gradient(unsigned char ***left, unsigned char ***right)
+{
+	image_zero(m_cost_vol, m_h, m_w, m_nr_plane);
+	compute_gradient(m_gradient_left, left);
+	compute_gradient(m_gradient_right, right);
+
+	for (int i = 0; i<m_nr_plane; i++)
+	{
+		for (int y = 0; y<m_h; y++) //shift the right image by i pixels
+		{
+			image_copy((&m_image_shifted[y][i]), right[y], m_w - i, 3);
+			memcpy(&(m_gradient_shifted[y][i]), m_gradient_right[y], sizeof(float)*(m_w - i));
+			for (int x = 0; x<i; x++)
+			{
+				qx_memcpy_u3(m_image_shifted[y][x], right[y][0]);//m_cost_on_border_occlusion;
+				m_gradient_shifted[y][x] = m_gradient_right[y][0];//m_cost_on_border_occlusion;
+			}
+		}
+		//for(int y=0;y<m_h;y++) for(int x=0;x<m_w-1;x++) 
+		for (int y = 0; y<m_h; y++) for (int x = 0; x<(m_w); x++)
+		{
+			double cost = 0;
+			for (int c = 0; c<3; c++) cost += abs(left[y][x][c] - m_image_shifted[y][x][c]);
+			cost = min(cost / 3, m_max_color_difference);
+			double cost_gradient = min((double)abs(m_gradient_left[y][x] - m_gradient_shifted[y][x]), m_max_gradient_difference);
+			m_cost_vol[y][x][i] = m_weight_on_color*cost + m_weight_on_color_inv*cost_gradient;
+		}
+	}
+}
+void qx_nonlocal_cost_aggregation::compute_gradient(float**gradient, unsigned char***image)
+{
+	float gray, gray_minus, gray_plus;
+	for (int y = 0; y<m_h; y++)
+	{
+		gray_minus = rgb_2_gray(image[y][0]);
+		gray = gray_plus = rgb_2_gray(image[y][1]);
+		gradient[y][0] = gray_plus - gray_minus + 127.5;
+		for (int x = 1; x<m_w - 1; x++)
+		{
+			gray_plus = rgb_2_gray(image[y][x + 1]);
+			gradient[y][x] = 0.5*(gray_plus - gray_minus) + 127.5;
+			gray_minus = gray;
+			gray = gray_plus;
+		}
+		gradient[y][m_w - 1] = gray_plus - gray_minus + 127.5;
+	}
 }

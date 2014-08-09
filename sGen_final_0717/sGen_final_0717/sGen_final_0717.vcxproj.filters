@@ -30,9 +30,6 @@
     <ClInclude Include="kruskal.h">
       <Filter>stereo maching</Filter>
     </ClInclude>
-    <ClInclude Include="nonlocal.h">
-      <Filter>stereo maching</Filter>
-    </ClInclude>
     <ClInclude Include="readPPM.h">
       <Filter>stereo maching</Filter>
     </ClInclude>
@@ -54,9 +51,6 @@
       <Filter>stereo maching</Filter>
     </ClCompile>
     <ClCompile Include="kruskal.cpp">
-      <Filter>stereo maching</Filter>
-    </ClCompile>
-    <ClCompile Include="nonlocal.cpp">
       <Filter>stereo maching</Filter>
     </ClCompile>
     <ClCompile Include="readPPM.cpp">
